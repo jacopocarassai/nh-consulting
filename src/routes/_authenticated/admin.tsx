@@ -13,6 +13,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
+
+
 type Row = {
   id: string;
   title: string;
@@ -36,6 +38,17 @@ function AdminPage() {
   const [editing, setEditing] = useState<Partial<Row> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loggedUserEmail, setLoggedUserEmail] = useState<string | undefined>(undefined);
+
+  async function fetchUser(){
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.email;
+  }
+
+  useEffect(() => {
+    fetchUser().then(setLoggedUserEmail);
+  }, []);
+
 
   async function uploadImage(file: File) {
     if (!editing) return;
@@ -90,10 +103,13 @@ function AdminPage() {
       client_list: editing.client_list ?? null,
       year: editing.year ?? null,
     };
-    const { error } = editing.id
-      ? await supabase.from("case_studies").update(payload).eq("id", editing.id)
-      : await supabase.from("case_studies").insert(payload);
+    const { data: rows, error } = editing.id
+      ? await supabase.from("case_studies").update(payload).eq("id", editing.id).select()
+      : await supabase.from("case_studies").insert(payload).select();
     if (error) return setError(error.message);
+    if (!rows || rows.length === 0) {
+      return setError("No rows were affected — check that you have permission to edit this case study.");
+    }
     setEditing(null);
     qc.invalidateQueries({ queryKey: ["admin", "case_studies"] });
     qc.invalidateQueries({ queryKey: ["case_studies", "published"] });
@@ -101,8 +117,11 @@ function AdminPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this case study?")) return;
-    const { error } = await supabase.from("case_studies").delete().eq("id", id);
+    const { data: rows, error } = await supabase.from("case_studies").delete().eq("id", id).select();
     if (error) return setError(error.message);
+    if (!rows || rows.length === 0) {
+      return setError("No rows were affected — check that you have permission to delete this case study.");
+    }
     qc.invalidateQueries({ queryKey: ["admin", "case_studies"] });
     qc.invalidateQueries({ queryKey: ["case_studies", "published"] });
   }
@@ -129,6 +148,7 @@ function AdminPage() {
             <p className="text-sm text-muted mt-1">Edit what's shown on your homepage.</p>
           </div>
           <div className="flex gap-3">
+            <span className="text-sm">You are connected as {loggedUserEmail}</span>
             <button
               onClick={() =>
                 setEditing({
