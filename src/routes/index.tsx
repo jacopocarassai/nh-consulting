@@ -7,6 +7,7 @@ import case1 from "@/assets/case-1.jpg";
 import case2 from "@/assets/case-2.jpg";
 import case3 from "@/assets/case-3.jpg";
 import logo from "@/assets/NH_Logo_sv.svg";
+import heroVideo from "@/assets/hero.mp4";
 
 // Nathalie must replace this with her own Calendly event URL.
 const CALENDLY_URL = "https://calendly.com/nathalie-hakansson/intro";
@@ -121,7 +122,17 @@ function Home() {
 
       <main id="top">
         {/* Hero — editorial, Norm-inspired */}
-        <section className="min-h-[100svh] flex flex-col justify-end pb-20 px-8 md:px-16 max-w-[1600px] mx-auto">
+        <section className="relative min-h-[100svh] flex flex-col justify-end pb-20 px-8 md:px-16 max-w-[1600px] mx-auto overflow-hidden">
+          
+          <video id="video1" autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 -z-20 w-full h-full object-cover">
+            <source src={heroVideo} type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+          <div className="absolute inset-0 -z-10 bg-background/70" />
           <div className="pt-40 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
             <div className="md:col-span-8">
               <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal">

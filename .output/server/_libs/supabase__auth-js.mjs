@@ -1,6 +1,6 @@
 import { __rest } from "tslib";
 //#region node_modules/@supabase/auth-js/dist/module/lib/version.js
-var version = "2.110.2";
+var version = "2.110.7";
 //#endregion
 //#region node_modules/@supabase/auth-js/dist/module/lib/constants.js
 /** Current session will be checked for refresh at this interval. */
@@ -6986,7 +6986,6 @@ var GoTrueClient = class GoTrueClient {
 	async _saveSession(session) {
 		this._debug("#_saveSession()", session);
 		this.suppressGetSessionWarning = true;
-		await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
 		const sessionToProcess = Object.assign({}, session);
 		const userIsProxy = sessionToProcess.user && sessionToProcess.user.__isUserNotAvailableProxy === true;
 		if (this.userStorage) {

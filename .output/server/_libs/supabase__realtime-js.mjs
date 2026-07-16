@@ -94,7 +94,7 @@ var WebSocketFactory = class {
 };
 //#endregion
 //#region node_modules/@supabase/realtime-js/dist/module/lib/constants.js
-var DEFAULT_VERSION = `realtime-js/2.110.2`;
+var DEFAULT_VERSION = `realtime-js/2.110.7`;
 var VSN_1_0_0 = "1.0.0";
 var VSN_2_0_0 = "2.0.0";
 var DEFAULT_VSN = VSN_2_0_0;
@@ -165,12 +165,13 @@ var Serializer = class {
 	}
 	_encodeUserBroadcastPush(message, encodingType, encodedPayload) {
 		var _a, _b;
-		const topic = message.topic;
-		const ref = (_a = message.ref) !== null && _a !== void 0 ? _a : "";
-		const joinRef = (_b = message.join_ref) !== null && _b !== void 0 ? _b : "";
-		const userEvent = message.payload.event;
+		const encoder = new TextEncoder();
+		const topic = encoder.encode(message.topic);
+		const ref = encoder.encode((_a = message.ref) !== null && _a !== void 0 ? _a : "");
+		const joinRef = encoder.encode((_b = message.join_ref) !== null && _b !== void 0 ? _b : "");
+		const userEvent = encoder.encode(message.payload.event);
 		const rest = this.allowedMetadataKeys ? this._pick(message.payload, this.allowedMetadataKeys) : {};
-		const metadata = Object.keys(rest).length === 0 ? "" : JSON.stringify(rest);
+		const metadata = encoder.encode(Object.keys(rest).length === 0 ? "" : JSON.stringify(rest));
 		if (joinRef.length > 255) throw new Error(`joinRef length ${joinRef.length} exceeds maximum of 255`);
 		if (ref.length > 255) throw new Error(`ref length ${ref.length} exceeds maximum of 255`);
 		if (topic.length > 255) throw new Error(`topic length ${topic.length} exceeds maximum of 255`);
@@ -178,7 +179,8 @@ var Serializer = class {
 		if (metadata.length > 255) throw new Error(`metadata length ${metadata.length} exceeds maximum of 255`);
 		const metaLength = this.USER_BROADCAST_PUSH_META_LENGTH + joinRef.length + ref.length + topic.length + userEvent.length + metadata.length;
 		const header = new ArrayBuffer(this.HEADER_LENGTH + metaLength);
-		let view = new DataView(header);
+		const view = new DataView(header);
+		const bytes = new Uint8Array(header);
 		let offset = 0;
 		view.setUint8(offset++, this.KINDS.userBroadcastPush);
 		view.setUint8(offset++, joinRef.length);
@@ -187,11 +189,16 @@ var Serializer = class {
 		view.setUint8(offset++, userEvent.length);
 		view.setUint8(offset++, metadata.length);
 		view.setUint8(offset++, encodingType);
-		Array.from(joinRef, (char) => view.setUint8(offset++, char.charCodeAt(0)));
-		Array.from(ref, (char) => view.setUint8(offset++, char.charCodeAt(0)));
-		Array.from(topic, (char) => view.setUint8(offset++, char.charCodeAt(0)));
-		Array.from(userEvent, (char) => view.setUint8(offset++, char.charCodeAt(0)));
-		Array.from(metadata, (char) => view.setUint8(offset++, char.charCodeAt(0)));
+		bytes.set(joinRef, offset);
+		offset += joinRef.length;
+		bytes.set(ref, offset);
+		offset += ref.length;
+		bytes.set(topic, offset);
+		offset += topic.length;
+		bytes.set(userEvent, offset);
+		offset += userEvent.length;
+		bytes.set(metadata, offset);
+		offset += metadata.length;
 		var combined = new Uint8Array(header.byteLength + encodedPayload.byteLength);
 		combined.set(new Uint8Array(header), 0);
 		combined.set(new Uint8Array(encodedPayload), header.byteLength);
@@ -1021,6 +1028,11 @@ var RealtimeChannel = class RealtimeChannel {
 	* Sends the supplied payload to the presence tracker so other subscribers can see that this
 	* client is online. Use `untrack` to stop broadcasting presence for the same key.
 	*
+	* Tracking makes this client visible to other subscribers immediately, regardless of this
+	* channel's `config.presence.enabled` setting or whether it has a `presence` listener — that
+	* flag only affects whether *this* client receives presence updates from others (and, on
+	* RLS-protected channels, whether it's authorized to do so).
+	*
 	* @category Realtime
 	*/
 	async track(payload, opts = {}) {
@@ -1028,7 +1040,7 @@ var RealtimeChannel = class RealtimeChannel {
 			type: "presence",
 			event: "track",
 			payload
-		}, opts.timeout || this.timeout);
+		}, opts);
 	}
 	/**
 	* Removes the current presence state for this client.

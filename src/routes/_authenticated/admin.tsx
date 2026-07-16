@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -112,6 +112,14 @@ function AdminPage() {
     navigate({ to: "/auth" });
   }
 
+  useEffect( ()=> {
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            setEditing(null);
+        }
+    })
+  })
+
   return (
     <div className="min-h-screen bg-background text-foreground px-6 md:px-12 py-16">
       <div className="max-w-4xl mx-auto">
@@ -190,9 +198,18 @@ function AdminPage() {
         {editing && (
           <div className="fixed inset-0 bg-foreground/40 backdrop-blur-sm flex items-center justify-center px-6 z-50">
             <div className="bg-background w-full max-w-lg p-8 rounded-2xl border border-border space-y-4 max-h-[90vh] overflow-auto">
-              <h2 className="font-display text-2xl italic">
-                {editing.id ? "Edit case study" : "New case study"}
-              </h2>
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="font-display text-2xl italic">
+                  {editing.id ? "Edit case study" : "New case study"}
+                </h2>
+                <button
+                  onClick={() => setEditing(null)}
+                  aria-label="Close"
+                  className="text-foreground/50 hover:text-foreground transition-colors text-xl leading-none cursor-pointer"
+                >
+                  ×
+                </button>
+              </div>
               {(
                 [
                   ["title", "Title", "text"],
