@@ -9,6 +9,7 @@ import case1 from "@/assets/case-1.jpg";
 import case2 from "@/assets/case-2.jpg";
 import case3 from "@/assets/case-3.jpg";
 import logo from "@/assets/NH_Logo_sv.svg";
+import silentLogo from "@/assets/nh-logo-silent-header.png";
 import parallaxImage from "@/assets/parallax.jpg";
 
 const CALENDLY_URL = "https://calendly.com/nathalie-nhconsulting";
@@ -64,9 +65,10 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "NH Consulting helps B2B companies grow through the customers they already have. Commercial strategy, customer insight and practical execution by Nathalie Håkansson.",
+          "NH Consulting helps B2B companies grow sustainably through the customers they already have — commercial strategy and practical execution.",
       },
       { property: "og:title", content: "NH Consulting — Nathalie Håkansson" },
+      { property: "og:site_name", content: "NH Consulting" },
       {
         property: "og:description",
         content:
@@ -353,9 +355,15 @@ function Home() {
             scrolled ? "bg-background/80 backdrop-blur-md" : "bg-transparent"
           }`}
         >
-        <div className="max-w-[1600px] mx-auto px-8 md:px-16 py-6 flex justify-between items-center">
+        <div className="max-w-[1600px] mx-auto px-8 md:px-16 py-6 flex md:justify-between justify-center items-center">
           <a href="#top" className="text-[11px] font-medium uppercase tracking-[0.35em]">
-            <img src={logo} alt="NH Consulting" width={160}/>
+            <img src={logo} alt="NH Consulting" width={160} className="nh-logo-header hidden md:block" />
+            <img
+              src={scrolled ? silentLogo : logo}
+              alt="NH Consulting"
+              width={scrolled ? 40 : 160}
+              className="nh-logo-header md:hidden"
+            />
           </a>
           <div className="hidden md:flex gap-10 text-[11px] font-medium uppercase tracking-[0.28em] text-foreground/70">
             <a href="#perspective" className="hover:text-foreground transition-colors">Perspective</a>
@@ -378,9 +386,6 @@ function Home() {
           </div>
           <div className="px-8 md:px-16 max-w-[1600px] mx-auto w-full pt-40 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
             <div className="md:col-span-8">
-              <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal">
-                Front page — Scroll ↓
-              </span>
               <h1 className="mt-8 font-display text-[2.5rem] md:text-[4.5rem] leading-[1.05] text-balance animate-reveal [animation-delay:120ms] max-w-[22ch]">
                 Most companies don&rsquo;t lack new customers.
                 <br />
