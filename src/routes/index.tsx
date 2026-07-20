@@ -72,7 +72,19 @@ export const Route = createFileRoute("/")({
         content:
           "Sustainable B2B growth from the customers you already have.",
       },
-    ],
+      { property: "og:image", content: "https://i.ibb.co/x88DjwD6/logo-og.jpg" },
+      { property: "og:image:width", content: "1000" },
+      { property: "og:image:height", content: "562" },
+      { property: "og:url", content: "https://nhconsulting.se" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "NH Consulting — Nathalie Håkansson" },
+      {
+        name: "twitter:description",
+        content: "Sustainable B2B growth from the customers you already have.",
+      },
+      { name: "twitter:image", content: "https://i.ibb.co/x88DjwD6/logo-og.jpg" },
+        ],
   }),
   component: Home,
 });
