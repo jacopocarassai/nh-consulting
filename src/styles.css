@@ -65,6 +65,10 @@
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
 }
 
+html{
+  scroll-behavior: smooth;
+}
+
 :root {
   --radius: 0.625rem;
   /* Norm-inspired stone palette — warm off-white paper, oak, restrained clay accent */
@@ -168,4 +172,74 @@
 
 @utility animate-reveal {
   animation: fade-up 0.9s var(--ease-out-expo) both;
+}
+
+
+@keyframes gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-gradient-bg {
+  background: linear-gradient(
+    120deg,
+    #f5ece3,
+    #e8d5cf,
+    #dce4d6,
+    #e3d6e8,
+    #f0e6da
+  );
+  background-size: 300% 300%;
+  animation: gradient-flow 18s ease infinite;
+}
+
+
+@keyframes blob-drift-1 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  33% { transform: translate(15%, 10%) scale(1.15); }
+  66% { transform: translate(-10%, 15%) scale(0.95); }
+}
+@keyframes blob-drift-2 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  50% { transform: translate(-18%, -12%) scale(1.2); }
+}
+@keyframes blob-drift-3 {
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  40% { transform: translate(12%, -15%) scale(0.9); }
+  70% { transform: translate(-8%, 8%) scale(1.1); }
+}
+
+.aurora-bg {
+  background: #f5f0e8;
+  overflow: hidden;
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+}
+.aurora-blob-1 {
+  width: 60%; height: 60%; top: -10%; left: -10%;
+  background: #e8c9c0;
+  animation: blob-drift-1 15s ease-in-out infinite;
+}
+.aurora-blob-2 {
+  width: 55%; height: 55%; top: 20%; right: -15%;
+  background: #cddccb;
+  animation: blob-drift-2 19s ease-in-out infinite;
+}
+.aurora-blob-3 {
+  width: 50%; height: 50%; bottom: -15%; left: 20%;
+  background: #dcd0e6;
+  animation: blob-drift-3 23s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease;
 }

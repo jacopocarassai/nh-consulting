@@ -1,16 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getConsent, onConsentChange, type ConsentState } from "@/lib/cookie-consent";
+import { CookieBanner } from "@/components/ui/CookieBanner";
 import nathalieAsset from "@/assets/nathalie.webp";
 import case1 from "@/assets/case-1.jpg";
 import case2 from "@/assets/case-2.jpg";
 import case3 from "@/assets/case-3.jpg";
 import logo from "@/assets/NH_Logo_sv.svg";
-import heroVideo from "@/assets/hero.mp4";
+import parallaxImage from "@/assets/parallax.jpg";
 
-// Nathalie must replace this with her own Calendly event URL.
-const CALENDLY_URL = "https://calendly.com/nathalie-hakansson/intro";
+const CALENDLY_URL = "https://calendly.com/nathalie-nhconsulting";
 
 const FALLBACK_IMAGES = [case1, case2, case3];
 
@@ -19,6 +20,32 @@ const CLIENT_BRANDS = [
   "Volvo", "Hitachi Energy", "Santander", "Ubisoft / Massive", "OECD",
   "Svenska Spel", "BSH Home Appliances",
 ];
+
+const TESTIMONIALS = [
+  {
+    quote:
+      "Nathalie has an entrepreneurial mindset and a rare ability to understand businesses as a whole, rather than just the function she's working in.",
+    cite: "Fred Bergklo · Solution Architect at Contentful",
+  },
+  {
+    quote: "Nathalie has a strong commercial mindset and a genuine ability to build lasting customer relationships. She quickly identifies growth opportunities, drives initiatives forward and consistently creates value for both customers and the business",
+    cite: "Gore Storm · CRN of N.Rich and Founder of Break The Box",
+  },
+];
+
+function useCarousel(length: number, intervalMs = 6000) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (length <= 1) return;
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % length);
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [length, intervalMs]);
+
+  return { index, setIndex };
+}
 
 type CaseStudy = {
   id: string;
@@ -50,7 +77,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function useParallax() {
+function useParallax(intensity = 0.18) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -60,8 +87,13 @@ function useParallax() {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const rect = el.getBoundingClientRect();
-        const offset = (rect.top - window.innerHeight / 2) * -0.08;
-        el.style.transform = `translate3d(0, ${offset}px, 0) scale(1.08)`;
+        const viewportH = window.innerHeight;
+        const total = viewportH + rect.height;
+        const progress = 1 - (rect.top + rect.height) / total;
+        const clamped = Math.max(0, Math.min(1, progress));
+        const maxShift = rect.height * intensity;
+        const offset = (clamped - 0.5) * maxShift;
+        el.style.transform = `translate3d(0, ${offset}px, 0) scale(${1 + intensity * 2})`;
       });
     };
     onScroll();
@@ -74,8 +106,24 @@ function useParallax() {
   return ref;
 }
 
-function useCalendlyEmbed() {
+function useScrolled(threshold = 20) {
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > threshold);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+  return scrolled;
+}
+
+function useCalendlyEmbed() {
+  const [enabled, setEnabled] = useState(() => getConsent()?.functional ?? false);
+
+  useEffect(() => onConsentChange(() => setEnabled(getConsent()?.functional ?? false)), []);
+
+  useEffect(() => {
+    if (!enabled) return;
     const id = "calendly-widget-script";
     if (document.getElementById(id)) return;
     const s = document.createElement("script");
@@ -83,12 +131,194 @@ function useCalendlyEmbed() {
     s.src = "https://assets.calendly.com/assets/external/widget.js";
     s.async = true;
     document.body.appendChild(s);
-  }, []);
+  }, [enabled]);
+
+  return enabled;
+}
+
+function useAnalytics() {
+  const [enabled, setEnabled] = useState(() => getConsent()?.analytics ?? false);
+
+  useEffect(() => onConsentChange(() => setEnabled(getConsent()?.analytics ?? false)), []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const id = "ga-script";
+    if (document.getElementById(id)) return;
+
+    const s = document.createElement("script");
+    s.id = id;
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=G-CTXQHDXTS4";
+    document.head.appendChild(s);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(...args: unknown[]) {
+      window.dataLayer.push(args);
+    }
+    gtag("js", new Date());
+    gtag("config", "G-CTXQHDXTS4");
+  }, [enabled]);
+}
+
+function PolicyModal({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-foreground/40 backdrop-blur-sm flex items-center justify-center px-6 z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background text-foreground w-full max-w-2xl max-h-[85vh] overflow-auto rounded-2xl border border-border p-8 md:p-12"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <h2 className="font-display text-3xl italic">{title}</h2>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-foreground/50 hover:text-foreground transition-colors text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
+        <div className="space-y-6 text-sm text-foreground/75 leading-relaxed">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function PolicySection({ heading, children }: { heading?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      {heading && (
+        <h3 className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted mb-3">
+          {heading}
+        </h3>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function PrivacyPolicyContent() {
+  return (
+    <>
+      <p className="text-xs text-muted">Last updated: July 2026</p>
+      <p>NH Consulting respects your privacy and is committed to protecting your personal data.</p>
+
+      <PolicySection heading="What information we collect">
+        <p>When you contact us or book a meeting, we may collect:</p>
+        <ul className="mt-3 list-disc pl-5 space-y-1">
+          <li>Name</li>
+          <li>Email address</li>
+          <li>Company</li>
+          <li>Phone number (if provided)</li>
+          <li>Any information you choose to share with us</li>
+        </ul>
+        <p className="mt-3">We may also collect anonymous website analytics through cookies.</p>
+      </PolicySection>
+
+      <PolicySection heading="Why we collect your data">
+        <p>We use your information to:</p>
+        <ul className="mt-3 list-disc pl-5 space-y-1">
+          <li>Respond to enquiries</li>
+          <li>Schedule meetings</li>
+          <li>Deliver our services</li>
+          <li>Improve our website and user experience</li>
+        </ul>
+        <p className="mt-3">We do not sell your personal information.</p>
+      </PolicySection>
+
+      <PolicySection heading="Third-party services">
+        <p>We may use trusted third-party providers, such as:</p>
+        <ul className="mt-3 list-disc pl-5 space-y-1">
+          <li>Calendly (meeting bookings)</li>
+          <li>Google Analytics (website analytics)</li>
+          <li>Google Workspace (email)</li>
+          <li>Other service providers necessary to operate our business</li>
+        </ul>
+        <p className="mt-3">These providers process personal data according to their own privacy policies.</p>
+      </PolicySection>
+
+      <PolicySection heading="Your rights">
+        <p>Under GDPR, you have the right to:</p>
+        <ul className="mt-3 list-disc pl-5 space-y-1">
+          <li>Access your personal data</li>
+          <li>Correct inaccurate information</li>
+          <li>Request deletion of your data</li>
+          <li>Object to certain processing</li>
+          <li>Withdraw consent where applicable</li>
+        </ul>
+        <p className="mt-3">To exercise your rights, please contact us.</p>
+      </PolicySection>
+
+      <PolicySection heading="Contact">
+        <p>NH Consulting</p>
+        <p>
+          Email:{" "}
+          <a href="mailto:nathalie@nhconsulting.se" className="underline hover:text-primary">
+            nathalie@nhconsulting.se
+          </a>
+        </p>
+        <p>VAT number: SE881209460801</p>
+      </PolicySection>
+    </>
+  );
+}
+
+function CookiePolicyContent() {
+  return (
+    <>
+      <p>This website uses cookies to improve your browsing experience.</p>
+      <div>
+        <p>Cookies may be used for:</p>
+        <ul className="mt-3 list-disc pl-5 space-y-1">
+          <li>Website functionality</li>
+          <li>Website analytics</li>
+          <li>Performance improvements</li>
+        </ul>
+      </div>
+      <p>You can manage or disable cookies through your browser settings.</p>
+      <p>If required by applicable law, we will request your consent before placing non-essential cookies.</p>
+    </>
+  );
 }
 
 function Home() {
-  useCalendlyEmbed();
+  const calendlyEnabled = useCalendlyEmbed();
+  useAnalytics();
   const portraitRef = useParallax();
+  const scrolled = useScrolled();
+  const [policyModal, setPolicyModal] = useState<"privacy" | "cookie" | null>(null);
+  const [consent, setConsentState] = useState<ConsentState | null>(null);
+  const [showBanner, setShowBanner] = useState(false);
+  const { index: testimonialIndex, setIndex: setTestimonialIndex } = useCarousel(TESTIMONIALS.length);
+
+  useEffect(() => {
+    const current = getConsent();
+    setConsentState(current);
+    setShowBanner(current === null);
+    return onConsentChange(() => {
+      const updated = getConsent();
+      setConsentState(updated);
+    });
+  }, []);
 
   const { data: cases } = useQuery({
     queryKey: ["case_studies", "published"],
@@ -104,9 +334,13 @@ function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <div className="min-h-screen text-foreground selection:bg-primary/20">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 w-full z-50 bg-background/80 backdrop-blur-md">
+       <nav
+          className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+            scrolled ? "bg-background/80 backdrop-blur-md" : "bg-transparent"
+          }`}
+        >
         <div className="max-w-[1600px] mx-auto px-8 md:px-16 py-6 flex justify-between items-center">
           <a href="#top" className="text-[11px] font-medium uppercase tracking-[0.35em]">
             <img src={logo} alt="NH Consulting" width={160}/>
@@ -122,18 +356,15 @@ function Home() {
 
       <main id="top">
         {/* Hero — editorial, Norm-inspired */}
-        <section className="relative min-h-[100svh] flex flex-col justify-end pb-20 px-8 md:px-16 max-w-[1600px] mx-auto overflow-hidden">
-          
-          <video id="video1" autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 -z-20 w-full h-full object-cover">
-            <source src={heroVideo} type="video/mp4" />
-            Your browser does not support HTML5 video.
-          </video>
-          <div className="absolute inset-0 -z-10 bg-background/70" />
-          <div className="pt-40 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
+        <section className="relative min-h-[100svh] flex flex-col justify-end pb-20 overflow-hidden">
+          <div className="absolute inset-0 -z-20 hero-gradient-bg" />
+          {/* <div className="absolute inset-0 -z-10 bg-background/70" /> */}
+          <div className="absolute inset-0 -z-20 aurora-bg">
+            <div className="aurora-blob aurora-blob-1" />
+            <div className="aurora-blob aurora-blob-2" />
+            <div className="aurora-blob aurora-blob-3" />
+          </div>
+          <div className="px-8 md:px-16 max-w-[1600px] mx-auto w-full pt-40 grid grid-cols-1 md:grid-cols-12 gap-12 items-end">
             <div className="md:col-span-8">
               <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted animate-reveal">
                 Front page — Scroll ↓
@@ -162,7 +393,6 @@ function Home() {
           </div>
         </section>
 
-        {/* Full-width portrait with parallax */}
         <section className="relative w-full h-[90svh] overflow-hidden bg-secondary">
           <div
             ref={portraitRef}
@@ -170,7 +400,7 @@ function Home() {
             style={{ transform: "scale(1.08)" }}
           >
             <img
-              src={nathalieAsset}
+              src={parallaxImage}
               alt="Portrait of Nathalie Håkansson"
               className="w-full h-full object-cover object-[center_25%]"
               loading="eager"
@@ -178,9 +408,7 @@ function Home() {
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
           <div className="absolute bottom-8 left-8 md:bottom-12 md:left-16 max-w-md">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-background/90">
-              Nathalie Håkansson · Founder, NH Consulting
-            </span>
+            
           </div>
         </section>
 
@@ -317,19 +545,43 @@ function Home() {
           </div>
         </section>
 
-        {/* Testimonial */}
-        <section className="py-32 md:py-40 px-8 md:px-16 bg-secondary">
-          <blockquote className="max-w-5xl mx-auto">
-            <p className="font-display text-3xl md:text-5xl leading-[1.2] text-balance italic">
-              &ldquo;Nathalie has an entrepreneurial mindset and a rare ability to
-              understand businesses as a whole, rather than just the function
-              she&rsquo;s working in.&rdquo;
-            </p>
-            <cite className="mt-10 block font-mono text-[10px] uppercase tracking-[0.3em] text-muted not-italic">
-              — Fred Bergklo · Solution Architect at Contentful
-            </cite>
-          </blockquote>
-        </section>
+         {/* Testimonial */}
+          <section className="py-32 md:py-40 px-8 md:px-16 bg-secondary overflow-hidden">
+            <div className="max-w-5xl mx-auto">
+                   <div className="grid">
+                    {TESTIMONIALS.map((t, i) => (
+                      <blockquote
+                        key={i}
+                        aria-hidden={i !== testimonialIndex}
+                        className={`col-start-1 row-start-1 transition-opacity duration-700 ${
+                          i === testimonialIndex ? "opacity-100" : "opacity-0 pointer-events-none"
+                        }`}
+                      >
+                        <p className="font-display text-3xl md:text-5xl leading-[1.2] text-balance italic">
+                          &ldquo;{t.quote}&rdquo;
+                        </p>
+                        <cite className="mt-10 block font-mono text-[10px] uppercase tracking-[0.3em] text-muted not-italic">
+                          — {t.cite}
+                        </cite>
+                      </blockquote>
+                    ))}
+                  </div>
+                  {TESTIMONIALS.length > 1 && (
+                    <div className="mt-12 flex gap-3">
+                      {TESTIMONIALS.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setTestimonialIndex(i)}
+                          aria-label={`Show testimonial ${i + 1}`}
+                          className={`h-1.5 rounded-full transition-all ${
+                            i === testimonialIndex ? "w-8 bg-foreground" : "w-1.5 bg-foreground/25"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+            </div>
+          </section>
 
         {/* About */}
         <section id="about" className="py-32 md:py-48 px-8 md:px-16 max-w-[1600px] mx-auto">
@@ -337,7 +589,7 @@ function Home() {
             <div className="md:col-span-5">
               <div className="aspect-[4/5] overflow-hidden bg-secondary md:sticky md:top-32">
                 <img
-                  src={nathalieAsset.url}
+                  src={nathalieAsset}
                   alt="Nathalie Håkansson"
                   className="w-full h-full object-cover object-[center_25%]"
                   loading="lazy"
@@ -409,7 +661,7 @@ function Home() {
                 Let&rsquo;s talk.
               </h2>
               <p className="mt-8 text-base md:text-lg text-foreground/70 max-w-[42ch] leading-relaxed">
-                Book a 45-minute conversation about the commercial opportunities
+                Book a 30-minute conversation about the commercial opportunities
                 inside your existing customer base — or reach out directly.
               </p>
               <ul className="mt-12 space-y-5 text-base">
@@ -438,32 +690,105 @@ function Home() {
                 </li>
               </ul>
             </div>
-            <div className="md:col-span-7 bg-background border border-border overflow-hidden">
-              <div
-                className="calendly-inline-widget"
-                data-url={`${CALENDLY_URL}?hide_gdpr_banner=1&background_color=f5f2ec&text_color=2a2620&primary_color=8a5a3c`}
-                style={{ minWidth: 320, height: 720 }}
-              />
+            <div className="md:col-span-7 bg-background overflow-hidden">
+              {calendlyEnabled ? (
+                <div
+                  className="calendly-inline-widget"
+                  data-url={`${CALENDLY_URL}?text_color=25160e&primary_color=dacdbc`}
+                  style={{ minWidth: 320, height: 700 }}
+                />
+              ) : (
+                <div className="min-h-[400px] flex flex-col items-center justify-center text-center border border-border rounded-2xl p-8">
+                  <p className="text-sm text-foreground/70 max-w-sm">
+                    Enable functional cookies to load the booking calendar here.
+                  </p>
+                  <button
+                    onClick={() => setShowBanner(true)}
+                    className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] underline hover:text-primary transition-colors"
+                  >
+                    Cookie settings
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </section>
       </main>
 
       <footer className="bg-foreground text-background py-16 px-8 md:px-16">
-        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-start gap-10">
-          <div>
-            <p className="font-display text-3xl italic">NH Consulting</p>
-            <p className="mt-4 max-w-md text-sm text-background/60 leading-relaxed">
-              Helping B2B companies grow through the customers they already have.
-            </p>
+        <div className="max-w-[1600px] mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-10">
+            <div>
+              <p className="font-display text-3xl italic">NH Consulting</p>
+              <p className="mt-4 max-w-md text-sm text-background/60 leading-relaxed">
+                Helping B2B companies grow through the customers they already have.
+              </p>
+            </div>
+            <div className="flex flex-col md:items-end gap-3 text-[11px] font-mono uppercase tracking-[0.25em] text-background/60">
+              <a href="mailto:nathalie@nhconsulting.se" className="hover:text-background transition-colors">nathalie@nhconsulting.se</a>
+              <a href="https://linkedin.com/in/nathaliehakansson" target="_blank" rel="noreferrer" className="hover:text-background transition-colors">LinkedIn</a>
+              <span>© {new Date().getFullYear()} · Nathalie Håkansson</span>
+            </div>
           </div>
-          <div className="flex flex-col md:items-end gap-3 text-[11px] font-mono uppercase tracking-[0.25em] text-background/60">
-            <a href="mailto:nathalie@nhconsulting.se" className="hover:text-background transition-colors">nathalie@nhconsulting.se</a>
-            <a href="https://linkedin.com/in/nathaliehakansson" target="_blank" rel="noreferrer" className="hover:text-background transition-colors">LinkedIn</a>
-            <span>© {new Date().getFullYear()} · Nathalie Håkansson</span>
+
+          <div className="mt-16 pt-8 border-t border-background/15 flex flex-col md:flex-row justify-between gap-6 text-[11px] text-background/50 leading-relaxed">
+            <div className="space-y-1">
+              <p>NH Consulting · Nathalie Håkansson</p>
+              <p>VAT number: SE881209460801</p>
+              <p>
+                <a href="mailto:nathalie@nhconsulting.se" className="hover:text-background transition-colors">
+                  nathalie@nhconsulting.se
+                </a>
+                {" · "}
+                <a href="tel:+46736818169" className="hover:text-background transition-colors">
+                  +46 73 681 81 69
+                </a>
+              </p>
+            </div>
+            <div className="flex gap-6 font-mono uppercase tracking-[0.2em] shrink-0">
+              <button
+                onClick={() => setPolicyModal("privacy")}
+                className="hover:text-background transition-colors"
+              >
+                Privacy Policy
+              </button>
+              <button
+                onClick={() => setPolicyModal("cookie")}
+                className="hover:text-background transition-colors"
+              >
+                Cookie Policy
+              </button>
+              <button
+                onClick={() => setShowBanner(true)}
+                className="hover:text-background transition-colors"
+              >
+                Cookie Settings
+              </button>
+            </div>
           </div>
         </div>
       </footer>
+
+      {policyModal === "privacy" && (
+        <PolicyModal title="Privacy Policy" onClose={() => setPolicyModal(null)}>
+          <PrivacyPolicyContent />
+        </PolicyModal>
+      )}
+      {policyModal === "cookie" && (
+        <PolicyModal title="Cookie Policy" onClose={() => setPolicyModal(null)}>
+          <CookiePolicyContent />
+        </PolicyModal>
+      )}
+      {showBanner && (
+        <CookieBanner
+          initial={consent}
+          onDone={() => setShowBanner(false)}
+          onOpenPolicy={() => {
+            setShowBanner(false);
+            setPolicyModal("cookie");
+          }}
+        />
+      )}
     </div>
   );
 }
