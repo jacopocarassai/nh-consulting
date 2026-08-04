@@ -30,7 +30,7 @@ const TESTIMONIALS = [
   },
   {
     quote: "Nathalie has a strong commercial mindset and a genuine ability to build lasting customer relationships. She quickly identifies growth opportunities, drives initiatives forward and consistently creates value for both customers and the business",
-    cite: "Gore Storm · CRN of N.Rich and Founder of Break The Box",
+    cite: "George Storm · CRN of N.Rich and Founder of Break The Box",
   },
 ];
 
@@ -419,13 +419,26 @@ function Home() {
             <img
               src={parallaxImage}
               alt="Portrait of Nathalie Håkansson"
-              className="w-full h-full object-cover object-[center_25%]"
+              className="w-full h-full object-cover object-[center_65%]"
               loading="eager"
             />
           </div>
+
+          {/* Slowly shifting duotone wash pulling the photo toward the site palette */}
+          <div className="absolute inset-0 mix-blend-soft-light portrait-tint" />
+
+          {/* Drifting aura glows bleeding in from the corners */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="portrait-aura-1 mix-blend-screen" />
+            <div className="portrait-aura-2 mix-blend-screen" />
+          </div>
+
+          {/* Fades into the nav above and the section below */}
+          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-background/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
+
           <div className="absolute bottom-8 left-8 md:bottom-12 md:left-16 max-w-md">
-            
+
           </div>
         </section>
 
@@ -460,7 +473,7 @@ function Home() {
             </div>
           </div>
 
-          <p className="mt-24 font-display italic text-xl md:text-2xl text-muted max-w-[42ch]">
+          <p className="mt-24 font-bold text-xl md:text-2xl text-muted max-w-[42ch]">
             Acquiring a new customer typically costs 5–25× more than retaining an
             existing one.
           </p>
@@ -574,7 +587,7 @@ function Home() {
                           i === testimonialIndex ? "opacity-100" : "opacity-0 pointer-events-none"
                         }`}
                       >
-                        <p className="font-display text-3xl md:text-5xl leading-[1.2] text-balance italic">
+                        <p className="text-3xl md:text-5xl leading-[1.2] text-balance">
                           &ldquo;{t.quote}&rdquo;
                         </p>
                         <cite className="mt-10 block font-mono text-[10px] uppercase tracking-[0.3em] text-muted not-italic">
@@ -674,7 +687,7 @@ function Home() {
               <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-muted">
                 Contact
               </span>
-              <h2 className="mt-6 font-display text-4xl md:text-6xl italic leading-[1.05]">
+              <h2 className="mt-6 font-display text-4xl md:text-6xl leading-[1.05]">
                 Let&rsquo;s talk.
               </h2>
               <p className="mt-8 text-base md:text-lg text-foreground/70 max-w-[42ch] leading-relaxed">
