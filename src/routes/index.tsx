@@ -763,8 +763,9 @@ function Home() {
 
           <div className="mt-16 pt-8 border-t border-background/15 flex flex-col md:flex-row justify-between gap-6 text-[11px] text-background/50 leading-relaxed">
             <div className="space-y-1">
-              <p>NH Consulting · Nathalie Håkansson</p>
-              <p>VAT number: SE881209460801</p>
+              <p>NH Consulting</p>
+              <p>Stockholm, Sweden</p>
+              <p>Registered business in Sweden</p>
               <p>
                 <a href="mailto:nathalie@nhconsulting.se" className="hover:text-background transition-colors">
                   nathalie@nhconsulting.se
