@@ -760,7 +760,6 @@ function Home() {
               <span>© {new Date().getFullYear()} · Nathalie Håkansson</span>
             </div>
           </div>
-
           <div className="mt-16 pt-8 border-t border-background/15 flex flex-col md:flex-row justify-between gap-6 text-[11px] text-background/50 leading-relaxed">
             <div className="space-y-1">
               <p>NH Consulting</p>
