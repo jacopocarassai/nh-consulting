@@ -456,7 +456,7 @@ function Home() {
             <div className="md:col-span-5 space-y-6 text-base text-foreground/70 leading-relaxed">
               <p>
                 I help B2B companies build a structured way of growing existing
-                customer relationships — so expansion becomes part of the
+                customer relationships, so expansion becomes part of the
                 business, not something that happens by accident.
               </p>
               <p>
@@ -499,10 +499,10 @@ function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-y-16 md:gap-y-0 border-t border-background/15">
               {[
-                { n: "01", h: "Identify", p: "Together, we identify where the greatest growth potential already exists — within your clients, relationships and commercial opportunities." },
+                { n: "01", h: "Identify", p: "Together, we identify where the greatest growth potential already exists, within your clients, relationships and commercial opportunities." },
                 { n: "02", h: "Prioritise", p: "We determine which accounts, initiatives and stakeholders deserve your attention first." },
                 { n: "03", h: "Activate", p: "We turn insights into action through structured client conversations, commercial initiatives and tangible growth opportunities." },
-                { n: "04", h: "Build", p: "I help you create a repeatable way of working — making customer growth a natural part of your business, not a one-off initiative." },
+                { n: "04", h: "Build", p: "I help you create a repeatable way of working, making customer growth a natural part of your business, not a one-off initiative." },
               ].map((s, i) => (
                 <div
                   key={s.n}
@@ -645,7 +645,7 @@ function Home() {
                   in Kraków before moving to Milan to complete a Master&rsquo;s
                   degree in Brand Management &amp; Communication at IED. At first
                   glance, art and SaaS might seem like two completely different
-                  worlds. To me, they&rsquo;ve always been connected — both are
+                  worlds. To me, they&rsquo;ve always been connected: both are
                   about understanding people, recognising patterns and seeing
                   opportunities others overlook.
                 </p>
@@ -654,12 +654,12 @@ function Home() {
                   ranging from early-stage startups to large enterprise
                   organisations, helping businesses create more value from their
                   existing customers. The best organisations didn&rsquo;t simply
-                  acquire customers — they built systems for understanding,
+                  acquire customers: they built systems for understanding,
                   developing and growing alongside them.
                 </p>
                 <p>
-                  That question — <em>why aren&rsquo;t more companies working this
-                  way?</em> — eventually became NH Consulting.
+                  That question, <em>why aren&rsquo;t more companies working this
+                  way?</em>, eventually became NH Consulting.
                 </p>
               </div>
             </div>
