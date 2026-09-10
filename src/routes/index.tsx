@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getConsent, onConsentChange, type ConsentState } from "@/lib/cookie-consent";
 import { CookieBanner } from "@/components/ui/CookieBanner";
-import nathalieAsset from "@/assets/nathalie.webp";
+import nathalieAsset from "@/assets/nathalie-new.jpg";
 import case1 from "@/assets/case-1.jpg";
 import case2 from "@/assets/case-2.jpg";
 import case3 from "@/assets/case-3.jpg";
